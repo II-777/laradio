@@ -1,0 +1,41 @@
+#!/bin/bash
+### help message
+helpmsg() { \
+echo "NAME
+	laradio - list all radio stations in your terminal.
+OPTIONS
+	-e   		edit local database
+	-h   		show a help message
+	--version 	show version information
+HOW TO START
+	step1: Add any radiostation from the TuneIn database (opml.radiotime.com) to $HOME/.local/share/laradio/laradio-db
+	step2: run laradio, choose your favourite radio station and enjoy!" && exit ;}
+
+### error message
+error() { \
+	echo "laradio: local database at file $HOME/.local/share/laradio/laradio-db not found" && exit ;}
+
+### check local database
+[ -e "$HOME/.local/share/laradio/laradio-db" ] || error
+
+### check for arguments
+[ "$1" = -h ] && helpmsg;
+[ "$1" = -e ] && $EDITOR "$HOME/.local/share/laradio/laradio-db" && exit;
+[ "$1" = --version ] && echo "laradio 1.0" && exit;
+
+### check for prerequisites
+set -- awk fzf mpv sed wget
+
+for i in "$@"
+do
+	pacman -Qq "$i" >/dev/null 2>&1 || { echo "laradio: $i" "must be installed." && exit 1 ;}
+done
+
+#### select radio station from the database
+select=$(uniq "$HOME/.local/share/laradio/laradio-db" | sed '/^\#/d'| sed '/^$/d' | column -s '|'  -t | fzf -i -d $'\u00a0' --nth 1 --reverse | sed $'s/ \([^ ]\)/\u00a0\\1/g' | awk -F $'\u00a0' '{print $NF}' | sed 's/"//g')
+
+[ -z "$select" ] && exit
+[ -n "$select" ] && wget -O /tmp/laradio.m3u "$select"
+
+#### open target using mpv
+mpv /tmp/laradio.m3u

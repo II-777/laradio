@@ -1,6 +1,7 @@
 # laradio
 laradio - list all radio stations in your terminal (bash script).
-tested on Pop!_OS 22.04 LTS, but may work on any other Arch-based or Debian-based operating systems.
+
+Tested on Pop!_OS 22.04 LTS, but may work on any other Arch-based or Debian-based operating systems.
 
 ## HOW TO START
 

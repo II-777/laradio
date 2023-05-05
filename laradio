@@ -26,10 +26,21 @@ error() { \
 ### check for prerequisites
 set -- awk fzf mpv sed wget
 
-for i in "$@"
-do
-	pacman -Qq "$i" >/dev/null 2>&1 || { echo "laradio: $i" "must be installed." && exit 1 ;}
-done
+### check for os type
+if [[ -f /etc/arch-release ]]; then
+  echo "[+] Arch-based system detected"
+  for i in "$@"; do
+    pacman -Qq "$i" >/dev/null 2>&1 || { echo "[-] laradio: $i" "must be installed." && exit 1 ;}
+  done
+elif [[ -f /etc/debian_version ]]; then
+  echo "[+] Debian-based system detected"
+  for i in "$@"; do
+  command -v "$i" >/dev/null 2>&1 || { echo "[-] laradio: $i" "must be installed." && exit 1 ;}
+  done
+else
+  echo "[-] Unsupported operating system"
+  exit 1
+fi
 
 #### select radio station from the database
 select=$(uniq "$HOME/.local/share/laradio/laradio-db" | sed '/^\#/d'| sed '/^$/d' | column -s '|'  -t | fzf -i -d $'\u00a0' --nth 1 --reverse | sed $'s/ \([^ ]\)/\u00a0\\1/g' | awk -F $'\u00a0' '{print $NF}' | sed 's/"//g')
@@ -38,4 +49,4 @@ select=$(uniq "$HOME/.local/share/laradio/laradio-db" | sed '/^\#/d'| sed '/^$/d
 [ -n "$select" ] && wget -O /tmp/laradio.m3u "$select"
 
 #### open target using mpv
-mpv /tmp/laradio.m3u
+mpv $select
